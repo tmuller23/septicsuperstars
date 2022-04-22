@@ -1,0 +1,57 @@
+
+<html>
+    <head>
+        <title>Sewer Defect Detection Application</title>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css">
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.0/js/bootstrap.min.js"></script>
+        <style>
+            .table::-webkit-scrollbar { display: none; }
+
+            .table {
+                display:block; 
+                height: 200px; 
+                width: 100%;
+                overflow-y: scroll;
+                -ms-overflow-style: none;
+            } 
+
+            .border-primary {
+                border: 2px solid #f5f5f5;
+            }
+
+            p {
+                font-size: 14px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="jumbotron">
+            <div class="container" style="display: inline-flex;">
+                <div class="container text-center">
+                    <h1>Defect Detection Application</h1>
+                </div>
+            </div>
+        </div>
+        <div class="container">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h2>Application</h2>
+                </div>
+                <div class="panel-body">
+                    <h3>Upload Your Video:</h3>
+                    <form action="" method='post' enctype="multipart/form-data" class="form-group">
+                        <input class="form-control-file" type="file" name="file"/><br/>
+                        <input class="btn btn-primary" type="submit" value="Upload" />
+                    </form> <br/>
+                    <h3>Run the Model:</h3>
+                    <form action="results" method="post">
+                        <input class="btn btn-primary" type='submit' value="Find Defects" />
+                    </form>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>
