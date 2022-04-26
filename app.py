@@ -1,50 +1,64 @@
-from flask import Flask, render_template, flash, request, redirect, url_for
-from werkzeug.utils import secure_filename
+import argparse
+import io
 import os
-import yolov5
+from PIL import Image
 
-####################
-# Model Prediction #
-####################
-def predict(img):
-    model  = yolov5.load("defect-model")
-    results =  model(img)
-    return results.show()
+import torch
+from flask import Flask, flash, render_template, request, redirect
+from werkzeug.utils import secure_filename
 
-###################
-# Flask Interface #
-###################
-uploads = "static/uploads"
+uploads = "static/uploads/"
 ALLOWED_EXTENSIONS = set(['png', 'jpg', 'jpeg', 'gif'])
-
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = uploads
 
-@app.route("/")
-def index():
-    return render_template('index.html')
+def predict(img):
+    results =  model(img, size=640)
+    results.render()
+    return results	
 
-@app.route("/app", methods = ['GET', 'POST'])
+@app.route("/", methods=["GET", "POST"])
 def modelapp():
-    return render_template('app.html')
     if request.method == 'POST':
-        # check if the post request has the file part
         if 'file' not in request.files:
-            flash('No file part')
+            flash('File not present')
             return redirect(request.url)
         file = request.files['file']
-        # if user does not select file, browser also
-        # submit a empty part without filename
         if file.filename == '':
-            flash('No selected file')
+            flash('File not selected')
             return redirect(request.url)
-        if file and allowed_file(file.filename):
+        if not file:
+             return
+        if file:
             filename = secure_filename(file.filename)
-            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            print(filename) 
+        file_bytes = file.read()
+        image = Image.open(io.BytesIO(file_bytes))
+        results = predict(image)
+        for img in results.imgs:
+            img_base64 = Image.fromarray(img)
+            img_base64.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+        return redirect(os.path.join(app.config['UPLOAD_FOLDER'], filename))
 
-@app.route("/results", methods = ['GET', 'POST'])
-def results():
-    return render_template('results.html')
+    return render_template("index.html")
+
 
 if __name__ == "__main__":
+    model = torch.hub.load('ultralytics/yolov5', 'custom', path='./best.pt', force_reload=True, autoshape=True
+    ) # force_reload = recache latest code)
+    model.conf = 0.05
+    model.eval()
     app.run(debug=True)
+
+    
+#@app.route("/results", methods = ['GET', 'POST'])
+#def results():
+#    return render_template('results.html')
+
+#@app.route('/uploads/<name>')
+#def download_file(name):
+#    return send_from_directory(app.config["UPLOAD_FOLDER"], name)
+#app.add_url_rule(
+#    "/uploads/<name>", endpoint="download_file", build_only=True
+#)
+
