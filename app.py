@@ -4,7 +4,7 @@ import os
 from PIL import Image
 
 import torch
-from flask import Flask, flash, render_template, request, redirect
+from flask import Flask, flash, render_template, request, redirect, url_for
 from werkzeug.utils import secure_filename
 
 uploads = "static/uploads/"
@@ -38,10 +38,13 @@ def modelapp():
         for img in results.imgs:
             img_base64 = Image.fromarray(img)
             img_base64.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-        return redirect(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+        return redirect(url_for('.results', imgs = os.path.join(app.config['UPLOAD_FOLDER'], filename)))
 
     return render_template("index.html")
 
+@app.route("/results", methods = ['GET', 'POST'])
+def results():
+    return render_template('results.html', images=[request.args['imgs']])
 
 if __name__ == "__main__":
     model = torch.hub.load('ultralytics/yolov5', 'custom', path='./best.pt', force_reload=True, autoshape=True
@@ -51,9 +54,7 @@ if __name__ == "__main__":
     app.run(debug=True)
 
     
-#@app.route("/results", methods = ['GET', 'POST'])
-#def results():
-#    return render_template('results.html')
+
 
 #@app.route('/uploads/<name>')
 #def download_file(name):
