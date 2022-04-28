@@ -34,23 +34,22 @@ def modelapp():
         if file:
             filename = secure_filename(file.filename)
             print(filename) 
-        #file_bytes = file.read()
-        #image = Image.open(io.BytesIO(file_bytes))
-        file_like_object = file.stream._file  
-        zipfile_ob = zipfile.ZipFile(file_like_object)
-        file_names = zipfile_ob.namelist()
+        
+        filestream = file.stream._file  
+        zipf = zipfile.ZipFile(filestream)
+        filenames = zipf.namelist()
         # Filter names to only include the filetype that you want:
-        file_names = [file_name for file_name in file_names if not file_name.startswith("_")]
-        files = [zipfile_ob.open(name).read() for name in file_names]
-        print(file_names)
+        filenames = [file_name for file_name in filenames if not file_name.startswith("_")]
+        files = [zipf.open(name).read() for name in filenames]
+        print(filenames)
         images = [Image.open(io.BytesIO(file_bytes)) for file_bytes in files]
         results = predict(images)
         i = 0
         for img in results.imgs:
             img_base64 = Image.fromarray(img)
-            img_base64.save(os.path.join(app.config['UPLOAD_FOLDER'], file_names[i]))
+            img_base64.save(os.path.join(app.config['UPLOAD_FOLDER'], filenames[i]))
             i += 1
-        return redirect(url_for('.results', imgs = ",".join(str(x) for x in file_names)))
+        return redirect(url_for('.results', imgs = ",".join(str(x) for x in filenames)))
 
     return render_template("index.html")
 
