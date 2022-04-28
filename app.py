@@ -1,4 +1,5 @@
 import argparse
+import zipfile
 import io
 import os
 from PIL import Image
@@ -9,6 +10,7 @@ from werkzeug.utils import secure_filename
 
 uploads = "static/uploads/"
 ALLOWED_EXTENSIONS = set(['png', 'jpg', 'jpeg', 'gif'])
+#ALLOWED_EXTENSIONS = set(['zip'])
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = uploads
 
@@ -32,19 +34,32 @@ def modelapp():
         if file:
             filename = secure_filename(file.filename)
             print(filename) 
-        file_bytes = file.read()
-        image = Image.open(io.BytesIO(file_bytes))
-        results = predict(image)
+        #file_bytes = file.read()
+        #image = Image.open(io.BytesIO(file_bytes))
+        file_like_object = file.stream._file  
+        zipfile_ob = zipfile.ZipFile(file_like_object)
+        file_names = zipfile_ob.namelist()
+        # Filter names to only include the filetype that you want:
+        file_names = [file_name for file_name in file_names if not file_name.startswith("_")]
+        files = [zipfile_ob.open(name).read() for name in file_names]
+        print(file_names)
+        images = [Image.open(io.BytesIO(file_bytes)) for file_bytes in files]
+        results = predict(images)
+        i = 0
         for img in results.imgs:
             img_base64 = Image.fromarray(img)
-            img_base64.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-        return redirect(url_for('.results', imgs = os.path.join(app.config['UPLOAD_FOLDER'], filename)))
+            img_base64.save(os.path.join(app.config['UPLOAD_FOLDER'], file_names[i]))
+            i += 1
+        return redirect(url_for('.results', imgs = ",".join(str(x) for x in file_names)))
 
     return render_template("index.html")
 
 @app.route("/results", methods = ['GET', 'POST'])
 def results():
-    return render_template('results.html', images=[request.args['imgs']])
+    paths = []
+    for filename in request.args['imgs'].split(","):
+        paths.append(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+    return render_template('results.html', images=paths)
 
 if __name__ == "__main__":
     model = torch.hub.load('ultralytics/yolov5', 'custom', path='./best.pt', force_reload=True, autoshape=True

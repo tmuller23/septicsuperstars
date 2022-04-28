@@ -38,11 +38,17 @@
             <div id="defectCarousel" class="carousel slide" data-ride="carousel">
                 <div class="carousel-inner">
                     
-                    {% for img in images %}
+                    {% for i in range(images|length) %}
+                    
+                    {% if i == 0 %}
                     <div class="item active">
-                        <img class="d-block w-100" src="{{ img }}"/>
+                    {% else %}
+                    <div class="item">
+                    {% endif %}
+                        <img class="d-block w-100" src="{{ images[i] }}"/>
                     </div>
                     {% endfor %}
+                    
                     
                     <!--
                     <div class="item active">
@@ -55,6 +61,7 @@
                         <img class="d-block w-100" src="https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ftse1.mm.bing.net%2Fth%3Fid%3DOIP.0eQ151pvCZEUJH9DHFMwUAHaJ4%26pid%3DApi&f=1" alt="Third slide">
                     </div>
                     -->
+
                 </div>
                 <a class="carousel-control-prev" href="#defectCarousel" role="button" data-slide="prev">
                     <span class="carousel-control-prev-icon" aria-hidden="true"></span>
@@ -65,6 +72,10 @@
                     <span class="sr-only">Next</span>
                 </a>
             </div>
+        </div>
+        <br/>
+        <div style="text-align: center">
+            <a href="/"><button type="button" class="btn btn-primary">Back to Home</button></a>
         </div>
     </body>
 </html>
