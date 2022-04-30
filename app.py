@@ -1,5 +1,5 @@
 import argparse
-import zipfile
+import zipfile as zp
 import io
 import os
 from PIL import Image
@@ -10,7 +10,6 @@ from werkzeug.utils import secure_filename
 
 uploads = "static/uploads/"
 ALLOWED_EXTENSIONS = set(['png', 'jpg', 'jpeg', 'gif'])
-#ALLOWED_EXTENSIONS = set(['zip'])
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = uploads
 
@@ -34,22 +33,32 @@ def modelapp():
         if file:
             filename = secure_filename(file.filename)
             print(filename) 
-        
-        filestream = file.stream._file  
-        zipf = zipfile.ZipFile(filestream)
-        filenames = zipf.namelist()
-        # Filter names to only include the filetype that you want:
-        filenames = [file_name for file_name in filenames if not file_name.startswith("_")]
-        files = [zipf.open(name).read() for name in filenames]
-        print(filenames)
-        images = [Image.open(io.BytesIO(file_bytes)) for file_bytes in files]
+        streamed_file = file.stream._file  
+        zipped = zp.ZipFile(streamed_file)
+        names_list = zipped.namelist()
+        files_name_kept_list = []
+        for name in names_list:
+            file_not_accepted = name.startswith("_")
+            if file_not_accepted:
+                continue
+            else:
+                files_name_kept_list.append(name)
+        files_list = []
+        for name in files_name_kept_list:
+            zips = zipped.open(name)
+            zips_read = zips.read()
+            files_list.append(zips_read)
+        print(files_name_kept_list)
+        images = []
+        for file in files_list:
+            image = Image.open(io.BytesIO(file))
+            images.append(image)
         results = predict(images)
         i = 0
-        for img in results.imgs:
-            img_base64 = Image.fromarray(img)
-            img_base64.save(os.path.join(app.config['UPLOAD_FOLDER'], filenames[i]))
+        for image in results.imgs:
+            Image.fromarray(image).save(os.path.join(app.config['UPLOAD_FOLDER'], files_name_kept_list[i]))
             i += 1
-        return redirect(url_for('.results', imgs = ",".join(str(x) for x in filenames)))
+        return redirect(url_for('.results', imgs = ",".join(str(x) for x in files_name_kept_list)))
 
     return render_template("index.html")
 
@@ -61,19 +70,7 @@ def results():
     return render_template('results.html', images=paths)
 
 if __name__ == "__main__":
-    model = torch.hub.load('ultralytics/yolov5', 'custom', path='./best.pt', force_reload=True, autoshape=True
-    ) # force_reload = recache latest code)
-    model.conf = 0.05
+    model = torch.hub.load('ultralytics/yolov5', 'custom', path='./best_modeltwo.pt', force_reload=True, autoshape=True) 
+    model.conf = 0.07
     model.eval()
     app.run(debug=True)
-
-    
-
-
-#@app.route('/uploads/<name>')
-#def download_file(name):
-#    return send_from_directory(app.config["UPLOAD_FOLDER"], name)
-#app.add_url_rule(
-#    "/uploads/<name>", endpoint="download_file", build_only=True
-#)
-
